@@ -9,7 +9,7 @@ export interface JudgeOverdueInput {
   ledgerContext: string;
 }
 
-export type OverdueStatus = "ok" | "watch" | "escalate";
+export type OverdueStatus = "ok" | "watch" | "escalate" | "defer_to_human";
 
 export interface JudgeOverdueOutput {
   status: OverdueStatus;
@@ -17,7 +17,7 @@ export interface JudgeOverdueOutput {
   reasoning: string;
 }
 
-const STATUSES: ReadonlySet<OverdueStatus> = new Set(["ok", "watch", "escalate"]);
+const STATUSES: ReadonlySet<OverdueStatus> = new Set(["ok", "watch", "escalate", "defer_to_human"]);
 
 function validateVerdict(value: unknown): Validation<JudgeOverdueOutput> {
   if (typeof value !== "object" || value === null) {
