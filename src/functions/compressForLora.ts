@@ -66,26 +66,31 @@ export async function compressForLora(input: CompressForLoraInput): Promise<Comp
       return fallbackCompressForLora(input);
     }
 
-    const { system, user } = compressForLoraPrompt(input);
-    let model = await chatJson({ systemPrompt: system, userPrompt: user, validate: validatePacket });
-    let bytes = Buffer.byteLength(JSON.stringify(model.packet));
+    try {
+      const { system, user } = compressForLoraPrompt(input);
+      let model = await chatJson({ systemPrompt: system, userPrompt: user, validate: validatePacket });
+      let bytes = Buffer.byteLength(JSON.stringify(model.packet));
 
-    if (bytes > BYTE_LIMIT) {
-      const shorten = shortenLocPrompt(model.packet, bytes, BYTE_LIMIT);
-      model = await chatJson({
-        systemPrompt: shorten.system,
-        userPrompt: shorten.user,
-        validate: validatePacket
-      });
-      bytes = Buffer.byteLength(JSON.stringify(model.packet));
+      if (bytes > BYTE_LIMIT) {
+        const shorten = shortenLocPrompt(model.packet, bytes, BYTE_LIMIT);
+        model = await chatJson({
+          systemPrompt: shorten.system,
+          userPrompt: shorten.user,
+          validate: validatePacket
+        });
+        bytes = Buffer.byteLength(JSON.stringify(model.packet));
+      }
+
+      if (bytes > BYTE_LIMIT) {
+        const truncated = enforceByteLimit(model.packet, BYTE_LIMIT);
+        return { packet: truncated.packet, bytes: truncated.bytes, reasoning: model.reasoning };
+      }
+
+      return { packet: model.packet, bytes, reasoning: model.reasoning };
+    } catch (apiErr: any) {
+      console.warn(`📡 [compressForLora] Gemma model call failed: ${apiErr.message}. Falling back to rules-based compression...`);
+      return fallbackCompressForLora(input);
     }
-
-    if (bytes > BYTE_LIMIT) {
-      const truncated = enforceByteLimit(model.packet, BYTE_LIMIT);
-      return { packet: truncated.packet, bytes: truncated.bytes, reasoning: model.reasoning };
-    }
-
-    return { packet: model.packet, bytes, reasoning: model.reasoning };
   } finally {
     logLatency("compressForLora", startedAt);
   }

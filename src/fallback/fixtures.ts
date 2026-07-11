@@ -46,17 +46,18 @@ export function fallbackRouteBundle(input: { bundle: Bundle; carriers: CarrierIn
   };
 }
 
-export function fallbackCompressForLora(input: { bundle: Bundle }): {
+export function fallbackCompressForLora(input: { bundle: any }): {
   packet: TriagePacket;
   bytes: number;
   reasoning: string;
 } {
+  const bundleId = input.bundle.bundleId || input.bundle.id || "unknown-bundle";
   const packet: TriagePacket = {
     k: "oth",
     u: "mod",
     p: 1,
     loc: "unk",
-    b: input.bundle.bundleId.slice(0, 12)
+    b: bundleId.slice(0, 12)
   };
   return {
     packet,
