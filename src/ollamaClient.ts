@@ -34,6 +34,19 @@ async function callOllamaChat(
   model: string,
   temperature: number
 ): Promise<string> {
+  const numCtx = process.env.OLLAMA_NUM_CTX ? parseInt(process.env.OLLAMA_NUM_CTX, 10) : 2048;
+  const numPredict = process.env.OLLAMA_NUM_PREDICT ? parseInt(process.env.OLLAMA_NUM_PREDICT, 10) : 512;
+  const numThread = process.env.OLLAMA_NUM_THREAD ? parseInt(process.env.OLLAMA_NUM_THREAD, 10) : undefined;
+
+  const options: Record<string, any> = {
+    temperature,
+    num_ctx: numCtx,
+    num_predict: numPredict
+  };
+  if (numThread !== undefined) {
+    options.num_thread = numThread;
+  }
+
   const res = await fetch(`${ollamaHost()}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,7 +55,7 @@ async function callOllamaChat(
       messages,
       format: "json",
       stream: false,
-      options: { temperature }
+      options
     })
   });
 
@@ -75,6 +88,8 @@ function parseAndValidate<T>(raw: string, validate: (value: unknown) => Validati
   return result.value;
 }
 
+const cache = new Map<string, any>();
+
 /**
  * Sends a system+user prompt to Gemma via Ollama's chat endpoint, expecting a JSON object
  * back. On parse or schema-validation failure, re-prompts once with the concrete error so
@@ -83,6 +98,12 @@ function parseAndValidate<T>(raw: string, validate: (value: unknown) => Validati
 export async function chatJson<T>(opts: ChatJsonOptions<T>): Promise<T> {
   const model = opts.model ?? defaultModel();
   const temperature = opts.temperature ?? 0.2;
+  const cacheKey = JSON.stringify({ systemPrompt: opts.systemPrompt, userPrompt: opts.userPrompt, model, temperature });
+
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey) as T;
+  }
+
   const messages: ChatMessage[] = [
     { role: "system", content: opts.systemPrompt },
     { role: "user", content: opts.userPrompt }
@@ -90,7 +111,9 @@ export async function chatJson<T>(opts: ChatJsonOptions<T>): Promise<T> {
 
   const firstRaw = await callOllamaChat(messages, model, temperature);
   try {
-    return parseAndValidate(firstRaw, opts.validate);
+    const validated = parseAndValidate(firstRaw, opts.validate);
+    cache.set(cacheKey, validated);
+    return validated;
   } catch (firstErr) {
     const reason = firstErr instanceof Error ? firstErr.message : String(firstErr);
     const retryMessages: ChatMessage[] = [
@@ -102,6 +125,8 @@ export async function chatJson<T>(opts: ChatJsonOptions<T>): Promise<T> {
       }
     ];
     const secondRaw = await callOllamaChat(retryMessages, model, temperature);
-    return parseAndValidate(secondRaw, opts.validate);
+    const validated = parseAndValidate(secondRaw, opts.validate);
+    cache.set(cacheKey, validated);
+    return validated;
   }
 }
