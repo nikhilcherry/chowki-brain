@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "bundleId": "bundle-sos-0091",
+    "kind": "sos",
+    "payload": {
+      "incident": {
+        "kind": "injury",
+        "urgency": "critical",
+        "persons": 1,
+        "locationHint": "near the waterfall, about 2km up from booth 2",
+        "boothId": "booth-2",
+        "summary": "Solo foreign hiker with a badly twisted leg near the waterfall."
+      }
+    },
+    "priority": "sos",
+    "originBoothId": "booth-2"
+  },
+  "carriers": [
+    { "peerId": "carrier-1", "direction": "downhill", "notes": "moves fast, solo, trail runner" },
+    { "peerId": "carrier-2", "direction": "downhill", "notes": "said he is a doctor, walking pace" },
+    { "peerId": "carrier-3", "direction": "uphill", "notes": "porter carrying supplies, slow" },
+    { "peerId": "carrier-4", "direction": "unknown", "notes": "unreliable, known to nap at teahouses" }
+  ]
+}

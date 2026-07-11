@@ -1,0 +1,11 @@
+{
+  "hiker": {
+    "hikerId": "H-2201",
+    "name": "Asha Rawat",
+    "lastCheckin": "2026-07-10T09:00:00+05:30",
+    "expectedCheckin": "2026-07-10T15:00:00+05:30",
+    "route": "Kedartal ridge trail, booth 3 to booth 5",
+    "groupSize": 1
+  },
+  "ledgerContext": "09:00 booth3: Asha Rawat checked out solo, headed toward booth5 via ridge trail.\n13:40 booth4 radio: no sighting of Asha Rawat today; weather clear.\n14:10 weather-net: light snow flurries reported above 4000m near the ridge trail since 13:30.\n15:00 booth5: Asha Rawat has not checked in, now 0h overdue at expected time.\n15:05 porter-relay: a porter descending from booth5 direction says he passed a solo woman hiker resting near a cairn about 2 hours ago, seemed fine and moving slowly."
+}
