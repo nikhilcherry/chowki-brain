@@ -1,8 +1,53 @@
 # chowki-brain
 
-A TypeScript library + CLI wrapping a local Gemma 4 model (served by [Ollama](https://ollama.com))
-to power decision-making for `chowki` — a delay-tolerant mesh network for mountain trail booths.
-This is the only tool in the system that talks to the model.
+A TypeScript library + CLI wrapping a local Gemma 4 model (served by [Ollama](https://ollama.com)) to power decision-making for `chowki` — a delay-tolerant mesh network for mountain trail booths. This is the only tool in the system that talks to the model.
+
+## System Architecture & Visual Flow
+
+```mermaid
+graph TD
+    subgraph Users & Hardware
+        A[Booth Operator / Sensors] -->|Messy Reports / Hiker Checkins| B(Chowki Booth)
+    end
+
+    subgraph local_brain [chowki-brain]
+        B -->|Invokes Library / CLI| C{chowki-brain}
+        C -->|1. parseReport| D[parseReport]
+        C -->|2. judgeOverdue| E[judgeOverdue]
+        C -->|3. routeBundle| F[routeBundle]
+        C -->|4. compressForLora| G[compressForLora]
+    end
+
+    subgraph LLM_Service [Ollama Local Server]
+        D & E & F & G -->|Structured Prompt| H[Gemma 4 model]
+        H -->|JSON + Reasoning| D & E & F & G
+    end
+
+    subgraph Outputs
+        D -->|Structured Incident JSON| I[Incident Record]
+        E -->|Ok / Watch / Escalate| J[Hiker Status Alert]
+        F -->|Carrier Selection & Replication| K[Routing Plan]
+        G -->|Compressed <200B LoRa Packet| L[LoRa Payload]
+    end
+```
+
+## Decision Loop Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Booth as Chowki Booth Ledger
+    participant Brain as chowki-brain
+    participant Ollama as Ollama (Gemma 4)
+
+    Booth->>Brain: Request Decision (e.g. judgeOverdue with context)
+    Note over Brain: Build structured system prompt<br/>and inject ledger evidence
+    Brain->>Ollama: POST /api/chat (JSON Schema enforced)
+    Ollama-->>Brain: Return JSON (structured data + reasoning)
+    Note over Brain: Parse & validate schema<br/>(Retry / fallback if needed)
+    Brain-->>Booth: Structured response + decision explanation
+```
+
 
 Four typed functions, each returning structured JSON **plus** a `reasoning` string:
 
