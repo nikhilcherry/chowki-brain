@@ -50,12 +50,22 @@ export async function judgeOverdue(input: JudgeOverdueInput): Promise<JudgeOverd
       return fallbackJudgeOverdue();
     }
 
-    const { system, user } = judgeOverduePrompt(input);
-    return await chatJson({
-      systemPrompt: system,
-      userPrompt: user,
-      validate: validateVerdict
-    });
+    try {
+      const { system, user } = judgeOverduePrompt(input);
+      return await chatJson({
+        systemPrompt: system,
+        userPrompt: user,
+        validate: validateVerdict
+      });
+    } catch (apiErr: any) {
+      // Falling back here matters more than in the other functions: the
+      // caller (agent.ts) catches judgeOverdue() errors per-hiker and just
+      // logs+skips, so an uncaught failure here means an overdue hiker
+      // gets NO action taken at all for this loop iteration -- silently
+      // worse than the canned "watch" verdict this returns instead.
+      console.warn(`📡 [judgeOverdue] Gemma model call failed: ${apiErr.message}. Falling back to rules-based verdict...`);
+      return fallbackJudgeOverdue();
+    }
   } finally {
     logLatency("judgeOverdue", startedAt);
   }

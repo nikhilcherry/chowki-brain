@@ -62,13 +62,18 @@ export async function routeBundle(input: RouteBundleInput): Promise<RouteBundleO
       return fallbackRouteBundle(input);
     }
 
-    const knownPeerIds = new Set(input.carriers.map((c) => c.peerId));
-    const { system, user } = routeBundlePrompt(input);
-    return await chatJson({
-      systemPrompt: system,
-      userPrompt: user,
-      validate: validateRouting(knownPeerIds)
-    });
+    try {
+      const knownPeerIds = new Set(input.carriers.map((c) => c.peerId));
+      const { system, user } = routeBundlePrompt(input);
+      return await chatJson({
+        systemPrompt: system,
+        userPrompt: user,
+        validate: validateRouting(knownPeerIds)
+      });
+    } catch (apiErr: any) {
+      console.warn(`📡 [routeBundle] Gemma model call failed: ${apiErr.message}. Falling back to rules-based routing...`);
+      return fallbackRouteBundle(input);
+    }
   } finally {
     logLatency("routeBundle", startedAt);
   }

@@ -77,23 +77,31 @@ export async function parseReport(input: ParseReportInput): Promise<ParseReportO
       return fallbackParseReport(input);
     }
 
-    const { system, user } = parseReportPrompt(input);
-    const model = await chatJson({
-      systemPrompt: system,
-      userPrompt: user,
-      validate: validateModelIncident
-    });
+    try {
+      const { system, user } = parseReportPrompt(input);
+      const model = await chatJson({
+        systemPrompt: system,
+        userPrompt: user,
+        validate: validateModelIncident
+      });
 
-    const incident: StructuredIncident = {
-      kind: model.kind,
-      urgency: model.urgency,
-      persons: model.persons,
-      locationHint: model.locationHint,
-      boothId: input.boothId,
-      summary: model.summary
-    };
+      const incident: StructuredIncident = {
+        kind: model.kind,
+        urgency: model.urgency,
+        persons: model.persons,
+        locationHint: model.locationHint,
+        boothId: input.boothId,
+        summary: model.summary
+      };
 
-    return { incident, reasoning: model.reasoning };
+      return { incident, reasoning: model.reasoning };
+    } catch (apiErr: any) {
+      // An unstructured incident report that fails to parse must not be
+      // silently dropped -- fall back to a canned "other/moderate" incident
+      // (a human still sees *something* was reported) rather than losing it.
+      console.warn(`📡 [parseReport] Gemma model call failed: ${apiErr.message}. Falling back to rules-based parsing...`);
+      return fallbackParseReport(input);
+    }
   } finally {
     logLatency("parseReport", startedAt);
   }

@@ -1,5 +1,11 @@
 # chowki-brain
 
+<p align="center">
+  <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-339933">
+  <img alt="model" src="https://img.shields.io/badge/LLM-Gemma_4_via_Ollama-4285F4">
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-green">
+</p>
+
 A TypeScript library + CLI wrapping a local Gemma 4 model (served by [Ollama](https://ollama.com)) to power decision-making for `chowki` — a delay-tolerant mesh network for mountain trail booths. This is the only tool in the system that talks to the model.
 
 ## System Architecture & Visual Flow
@@ -213,3 +219,7 @@ tests/                    vitest suite
 
 No chat loop, no conversation memory, no RAG, no embeddings, no streaming UI — four functions,
 each a single request/response round trip to the model.
+
+## License
+
+MIT
